@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Stoppeklokke</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 20px;
+      background: linear-gradient(135deg, #f6d365, #fda085);
+      color: #333;
+      background-repeat: no-repeat;
+      background-attachment: fixed;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+    }
+    h1 {
+      text-align: center;
+      color: #fff;
+      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+    }
+    .controls {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    .controls button {
+      padding: 10px 15px;
+      border: none;
+      background-color: #ff6f61;
+      color: white;
+      border-radius: 8px;
+      font-size: 16px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+    .controls button:hover {
+      background-color: #e65b50;
+    }
+    .time-display {
+      font-size: 3rem;
+      margin: 20px 0;
+      color: #fff;
+    }
+    .laps {
+      list-style-type: none;
+      padding: 0;
+      margin: 20px 0;
+      max-width: 300px;
+      background: rgba(255, 255, 255, 0.9);
+      border-radius: 8px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+      padding: 10px;
+    }
+    .laps li {
+      padding: 5px;
+      border-bottom: 1px solid #ddd;
+      font-size: 1.2rem;
+    }
+    .laps li:last-child {
+      border-bottom: none;
+    }
+  </style>
+</head>
+<body>
+  <h1>Stoppeklokke</h1>
+  <div class="time-display" id="time-display">00:00:00</div>
+  <div class="controls">
+    <button onclick="startStop()" id="start-stop-btn">Start</button>
+    <button onclick="resetClock()">Reset</button>
+    <button onclick="recordLap()">Lap</button>
+    <button onclick="copyLaps()">Copy Laps</button>
+  </div>
+  <ul class="laps" id="laps"></ul>
+
+  <script>
+    let timerInterval;
+    let elapsedTime = 0;
+    let isRunning = false;
+
+    function startStop() {
+      const button = document.getElementById('start-stop-btn');
+      if (isRunning) {
+        clearInterval(timerInterval);
+        button.textContent = 'Start';
+      } else {
+        const startTime = Date.now() - elapsedTime;
+        timerInterval = setInterval(() => {
+          elapsedTime = Date.now() - startTime;
+          updateTimeDisplay();
+        }, 1000);
+        button.textContent = 'Stop';
+      }
+      isRunning = !isRunning;
+    }
+
+    function resetClock() {
+      clearInterval(timerInterval);
+      elapsedTime = 0;
+      isRunning = false;
+      document.getElementById('start-stop-btn').textContent = 'Start';
+      updateTimeDisplay();
+      document.getElementById('laps').innerHTML = '';
+    }
+
+    function updateTimeDisplay() {
+      const hours = Math.floor(elapsedTime / 3600000);
+      const minutes = Math.floor((elapsedTime % 3600000) / 60000);
+      const seconds = Math.floor((elapsedTime % 60000) / 1000);
+      document.getElementById('time-display').textContent =
+        `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+    }
+
+    function recordLap() {
+      const lapTime = document.getElementById('time-display').textContent;
+      const lapList = document.getElementById('laps');
+      const lapItem = document.createElement('li');
+      lapItem.textContent = lapTime;
+      lapList.appendChild(lapItem);
+      saveLaps();
+    }
+
+    function saveLaps() {
+      const laps = Array.from(document.getElementById('laps').children).map(li => li.textContent);
+      localStorage.setItem('stopwatchLaps', JSON.stringify(laps));
+    }
+
+    function loadLaps() {
+      const laps = JSON.parse(localStorage.getItem('stopwatchLaps')) || [];
+      const lapList = document.getElementById('laps');
+      laps.forEach(lap => {
+        const lapItem = document.createElement('li');
+        lapItem.textContent = lap;
+        lapList.appendChild(lapItem);
+      });
+    }
+
+    function copyLaps() {
+      const laps = Array.from(document.getElementById('laps').children).map(li => li.textContent).join('\n');
+      navigator.clipboard.writeText(laps).then(() => {
+        alert('Laps copied to clipboard!');
+      });
+    }
+
+    // Initialize
+    loadLaps();
+    updateTimeDisplay();
+  </script>
+</body>
+</html>
